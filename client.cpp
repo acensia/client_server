@@ -5,7 +5,7 @@
 #include <unistd.h>     // For close
 #include <string>     // For memset
 
-void quit(int);
+bool quit(int);
 bool in= true;
 
 void unconnect(int sock){
@@ -37,19 +37,19 @@ void send_MSG(int sock){
     std::cout << "Server: " << buffer << std::endl;
 
 }
-void quit(int sock){
+bool quit(int sock){
     char k;
     std::cout << "Do you want to quit ? : Y / N" << std::endl;
     std::cin >> k;
     if(k == 'y' || k == 'Y'){
         unconnect(sock);
-        return;
+        return true;
     }
     if(k== 'n' || k == 'N'){
-        return;
+        return false;
     }
     std::cout << "Press right button" << std::endl;
-    quit(sock);
+    return quit(sock);
 }
 
 int main () {
