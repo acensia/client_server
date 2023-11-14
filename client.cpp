@@ -4,23 +4,53 @@
 #include <arpa/inet.h>  // For inet_pton
 #include <unistd.h>     // For close
 #include <string>     // For memset
+#include "connection/connection.h"
 
-bool quit(int);
-bool in= true;
+bool in = true;
+std::string name;
 
-void unconnect(int sock){
-    ssize_t bytes = send(sock, "_quit", 5, 0);
-    if(bytes == -1){
-        std::cerr<<"Failed to send data." << std::endl;
-        return;
+bool check3000(int a, int b){
+    if(a+b != 3000){
+        std::cout<<"Enter the correct value!\n";
     }
-    in = false;
+    return (a+b != 3000);
+}
+
+void enter(int sock){
+    int x, y, atk, df, pos;
+    std::cout<<"Set your location! Map size is 10\n";
+    std::cout<<"X : ";    std::cin>>x;
+    std::cout<<"Y : ";    std::cin>>y;
+    std::cout<<"Set your stat! Sum of stat should be 3000\n";
+    do{
+        std::cout<<"ATK : "; std::cin>>atk;
+        std::cout<<"DEF : "; std::cin>>df;
+    }while(check3000(atk, df));
+    std::cout<<"Set your state! Attack mode : 0, Defend mode : 1\n";
+    do{
+    std::cout<<"Pose : "; std::cin>>pos;
+    }while(pos != 1 && pos != 0);
+    const int info[] = {x, y, atk, df, pos};
+    send(sock, info, sizeof(info), 0);
+
+    char buffer[64];
+    std::string receivedMessage;
+    int bytesReceived = 0;
+
+    bytesReceived = recv(sock, buffer, 64, 0);
+
+    if (bytesReceived == -1) {
+        // Handle errors
+    }
+    receivedMessage.append(buffer, bytesReceived);
+    std::cout<<receivedMessage<<std::endl;
+    return;
 }
 
 void send_MSG(int sock){
     std::string msg;
     std::cout << "Write your MSG"<<std::endl;
-    std::getline(std::cin, msg);
+    gettingline(msg);
     if(msg == "_quit") {
         quit(sock);
         return;
@@ -31,25 +61,11 @@ void send_MSG(int sock){
         std::cerr<<"Failed to send data." << std::endl;
         return;
     }
-
+    std::cout<<"Your message \""<<msg<<"\" has sent"<<std::endl;
     char buffer[1024] = {0};
     recv(sock, buffer, 1024, 0);
     std::cout << "Server: " << buffer << std::endl;
 
-}
-bool quit(int sock){
-    char k;
-    std::cout << "Do you want to quit ? : Y / N" << std::endl;
-    std::cin >> k;
-    if(k == 'y' || k == 'Y'){
-        unconnect(sock);
-        return true;
-    }
-    if(k== 'n' || k == 'N'){
-        return false;
-    }
-    std::cout << "Press right button" << std::endl;
-    return quit(sock);
 }
 
 int main () {
@@ -71,14 +87,20 @@ int main () {
         std::cerr << "Can't connect to the server" << std::endl;
         return 1;
     }
+    
+    std::cout<<"What's your name? ";
+    do {
+        std::cout<<"Write in 20 letters.\n";
+        gettingline(name);
+    } while(name.length() > 20);
+    ssize_t bytes = send(sock, name.c_str(), name.length(), 0);
+    if(bytes == -1){
+        std::cerr<<"Failed to send name." << std::endl;
+        return 1;
+    }
 
-    const char* message = "Hello, Server!";
-    send(sock, message, strlen(message), 0);
-
-    char buffer[1024] = {0};
-    recv(sock, buffer, 1024, 0);
-    std::cout << "Server: " << buffer << std::endl;
-
+    enter(sock);
+    std::cout<<"Communication starts!\n";
     in = true;
     do{
         send_MSG(sock);
