@@ -6,10 +6,16 @@ import time
 MAP_SIZE = 10
 
 class game:
-    map = [[[] for _ in range(MAP_SIZE)] for _ in range(MAP_SIZE)]
+    mat = [[[] for _ in range(MAP_SIZE)] for _ in range(MAP_SIZE)]
     players = 0
     def __init__(self) -> None:
         pass
+
+    def now():
+        for i in game.mat:
+            for j in i:
+                print(f"{len(j):>{2}}", end=" ")
+            print()
     
     def online():
         print(f"{game.players} is online")
@@ -21,25 +27,33 @@ class player(game):
     def __init__(self, name) -> None:
         self.name = name
         game.players += 1
+        self.x = -1
 
     def setStat(self, info):
-        self.atk = info[3]
-        self.df = info[4]
-        self.pos = info[5]
+        self.atk = info[2]
+        self.df = info[3]
+        self.pos = info[4]
 
     def setLoc(self, info):
         self.x = info[0]
         self.y = info[1]
+        game.mat[self.x][self.y].append(self.name)
     
 
     def move(self, i, j):
         self.x = (self.x + i + MAP_SIZE) % MAP_SIZE
         self.y = (self.y + j + MAP_SIZE) % MAP_SIZE
 
-
+    def dest(self):
+        print(f"Player \"{self.name}\" has quit")
+        if self.x != -1:
+            game.mat[self.x][self.y].remove(self.name)
+        game.players -= 1
 
 
 def handle_client(client_socket, client_address):
+    client_socket.send(struct.pack('!i', MAP_SIZE))
+
     name = client_socket.recv(20).decode()
     if not name:
         print(f"Connection error on {client_address}")
@@ -51,31 +65,27 @@ def handle_client(client_socket, client_address):
     info_data = client_socket.recv(5*8)
     if not info_data:
         print(f"Connection error on {client_address}")
-        print(f"Player \"{name}\" has quit")
-        game.players -= 1
+        P.dest()
         return
     info = struct.unpack(f'{5}i', info_data)
     P.setLoc(info)
     P.setStat(info)
-    game.online()
+    game.now()
     msg = f"Your state is) \nlocation : {P.x}, {P.y}\nstat : {P.atk}, {P.df}\npose : {P.pos}\n"
     client_socket.send(msg.encode())
-    print(msg)
+    # print(msg)
 
     while True:
         # Receive data from the client
-        print("msg receiving")
         message = client_socket.recv(1024).decode()
         if not message:
             print(f"Connection error on {client_address}")
-            print(f"Player \"{name}\" has quit")
-            game.players -= 1
+            P.dest()
             break
 
         if(message == "_quit"):
             client_socket.close()
-            print(f"Player \"{name}\" has quit")
-            game.players -= 1
+            P.dest()
             break
 
         print(f"Received from client: {message}")
