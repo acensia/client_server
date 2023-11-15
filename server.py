@@ -1,23 +1,36 @@
 import socket
 import concurrent.futures
 import struct
+import time
 
 MAP_SIZE = 10
 
 class game:
     map = [[[] for _ in range(MAP_SIZE)] for _ in range(MAP_SIZE)]
+    players = 0
     def __init__(self) -> None:
         pass
+    
+    def online():
+        print(f"{game.players} is online")
+        return game.players
+
 
 
 class player(game):
-    def __init__(self,info, name) -> None:
+    def __init__(self, name) -> None:
+        self.name = name
+        game.players += 1
+
+    def setStat(self, info):
+        self.atk = info[3]
+        self.df = info[4]
+        self.pos = info[5]
+
+    def setLoc(self, info):
         self.x = info[0]
         self.y = info[1]
-        self.atk = info[2]
-        self.df = info[3]
-        self.pos = info[4]
-        self.name = name
+    
 
     def move(self, i, j):
         self.x = (self.x + i + MAP_SIZE) % MAP_SIZE
@@ -26,23 +39,43 @@ class player(game):
 
 
 
-def handle_client(client_socket):
+def handle_client(client_socket, client_address):
     name = client_socket.recv(20).decode()
+    if not name:
+        print(f"Connection error on {client_address}")
+        return
 
+    P = player(name)
     print(f"{name} entered.")
+    game.online()
     info_data = client_socket.recv(5*8)
+    if not info_data:
+        print(f"Connection error on {client_address}")
+        print(f"Player \"{name}\" has quit")
+        game.players -= 1
+        return
     info = struct.unpack(f'{5}i', info_data)
-    P = player(info, name)
+    P.setLoc(info)
+    P.setStat(info)
+    game.online()
     msg = f"Your state is) \nlocation : {P.x}, {P.y}\nstat : {P.atk}, {P.df}\npose : {P.pos}\n"
     client_socket.send(msg.encode())
     print(msg)
 
     while True:
         # Receive data from the client
-        print("msg receivings")
+        print("msg receiving")
         message = client_socket.recv(1024).decode()
+        if not message:
+            print(f"Connection error on {client_address}")
+            print(f"Player \"{name}\" has quit")
+            game.players -= 1
+            break
+
         if(message == "_quit"):
             client_socket.close()
+            print(f"Player \"{name}\" has quit")
+            game.players -= 1
             break
 
         print(f"Received from client: {message}")
@@ -50,8 +83,6 @@ def handle_client(client_socket):
         # Send a response back to the client
         response = "Hello from the server!"
         client_socket.send(response.encode())
-    
-    print(f"Player \"{name}\" has quit")
 
 
 def main():
@@ -71,12 +102,14 @@ def main():
 
         print(f"Server listening on {host}:{port}")
 
+
         with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+            start = time.time()
             while True:
                 # Accept a connection
                 client_socket, client_address = server_socket.accept()
                 print(f"Connection from {client_address}")
-                executor.submit(handle_client, client_socket)
+                executor.submit(handle_client, client_socket, client_address)
 
         # Close the server socket
         server_socket.close()
