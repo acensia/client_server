@@ -1,5 +1,5 @@
 #include <iostream>
-#include "connection.h"
+#include "connection/connection.h"
 
 bool gettingline(std::string &str){
     // to check if any '\n' remains in cin

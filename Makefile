@@ -1,24 +1,35 @@
 CXX = g++ -std=c++11
-CXXFLAGS =  ""# -Wall -I/opt/homebrew/include
+CXXFLAGS =  -Iinclude# -Wall -I/opt/homebrew/include
 LDFLAGS = ""# -L/opt/homebrew/lib -lglut -framework OpenGL
 
-# Object files
-OBJS = connection.o client.o
+# Source and object directories
+SRCDIR = src
+OBJDIR = obj
 
-# Target executable
+# Find all .cpp files in src/ and its subdirectories
+SOURCES = $(shell find $(SRCDIR)/ -name '*.cpp')
+
+# Object files with path in obj/ directory
+OBJECTS = $(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/%.o,$(SOURCES))
+
+# Name of the executable
 TARGET = cs_game
 
-# Build rules
+# Default target
 all: $(TARGET)
 
-$(TARGET): $(OBJS)
-	$(CXX) -o $@ $^ $(LDFLAGS)
+# Linking the executable from the object files
+$(TARGET): $(OBJECTS)
+	$(CXX) $(CXXFLAGS) $^ -o $@
 
-connection.o: connection/connection.cpp connection/connection.h
-	$(CXX) $(CXXFLAGS) -c -o $@ $<
+# Compiling source files into object files
+$(OBJDIR)/%.o: $(SRCDIR)/%.cpp
+	@mkdir -p $(@D)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-client.o: client.cpp
-	$(CXX) $(CXXFLAGS) -c -o $@ $<
-
+# Clean up
 clean:
-	rm -f *.o $(TARGET).exe
+	rm -rf $(OBJDIR)/*
+	rm -f $(TARGET)
+
+.PHONY: all clean
