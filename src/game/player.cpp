@@ -1,5 +1,5 @@
 #include <iostream>
-#include "player/player.h"
+#include "game/player.h"
 
 bool check3000(int a, int b){
     if(a+b != 3000 || a<0 || b<0){
@@ -8,22 +8,22 @@ bool check3000(int a, int b){
     return (a+b != 3000 || a<0 || b<0);
 }
 
-bool checkLoc(int x, int y){
-    if((x < 0 || x >= MAP_SIZE) || (y < 0 || y >= MAP_SIZE)){
+bool checkLoc(int x, int y, int ms){
+    if((x < 0 || x >= ms) || (y < 0 || y >= ms)){
         std::cout<<"Write the correct location!\n";
     }
-    return (x < 0 || x >= MAP_SIZE) || (y < 0 || y >= MAP_SIZE);
+    return (x < 0 || x >= ms) || (y < 0 || y >= ms);
 }
 
 
 
-void enter(int sock){
+void enter(int sock, Map& curr_map){
     int x, y, atk, df, pos;
-    std::cout<<"Set your location! Map size is "<<MAP_SIZE<<std::endl;
+    std::cout<<"Set your location! Map size is "<<curr_map.getMapSize()<<std::endl;
     do {
     std::cout<<"X : ";    std::cin>>x;
     std::cout<<"Y : ";    std::cin>>y;
-    } while(checkLoc(x, y));
+    } while(checkLoc(x, y, curr_map.getMapSize()));
     std::cout<<"Set your stat! Sum of stat should be 3000\n";
     do{
         std::cout<<"ATK : "; std::cin>>atk;

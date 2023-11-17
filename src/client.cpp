@@ -1,16 +1,9 @@
 #include <iostream>
-#include <sys/socket.h> // For socket functions
-#include <netinet/in.h> // For sockaddr_in
-#include <arpa/inet.h>  // For inet_pton
-#include <unistd.h>     // For close
-#include <string>     // For memset
 #include "connection/connection.h"
-#include "player/player.h"
+#include "game/player.h"
 
 bool in = true;
 std::string name;
-
-int MAP_SIZE;
 
 int main () {
 
@@ -32,8 +25,10 @@ int main () {
         std::cerr << "Can't connect to the server" << std::endl;
         return 1;
     }
-    recv(sock, &MAP_SIZE, 4, 0);
-    
+    int MS;
+    recv(sock, &MS, 8, 0);
+    std::cout<<ntohl(MS)<<std::endl;
+    Map curr_map(ntohl(MS));
     std::cout<<"What's your name? ";
     do {
         std::cout<<"Write in 20 letters.\n";
@@ -45,7 +40,7 @@ int main () {
         return 1;
     }
 
-    enter(sock);
+    enter(sock, curr_map);
     std::cout<<"Communication starts!\n";
     in = true;
     do{

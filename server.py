@@ -102,6 +102,8 @@ def main():
     # Create a socket object
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
         G = game()
+
+         # to wait when server run right after terminated -> to run server on the same port 
         server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
         # Bind the socket to the address and port
