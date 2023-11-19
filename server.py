@@ -5,8 +5,45 @@ import time
 
 MAP_SIZE = 10
 
+class badukpan :
+    def __init__(self, size):
+        self.pan = [['+' for _ in range(size)] for _ in range(size)]
+        self.p1 = ""
+        self.p2 = ""
+        self.ing = False
+
+    def showPan(self):
+        res = ""
+        for r in self.pan:
+            for c in r:
+                print(c, end=' ')
+                res += c
+            print('')
+        return res
+    
+    def putDol(self, p, i, j):
+        if not self.ing:
+            return
+        if p == self.p1:
+            self.pan[i][j] = '*'
+        else :
+            self.pan[i][j] = 'o'
+
+    def start(self, p1, p2):
+        self.ing = True
+        self.p1 = p1
+        self.p2 = p2
+
+    def out(self, p):
+        if self.p1 == p:
+            p1 = ""
+        else :
+            p2 = ""
+        self.ing = False
+
 class game:
     mat = [[[] for _ in range(MAP_SIZE)] for _ in range(MAP_SIZE)]
+    pans = [[badukpan(9) for _ in range(MAP_SIZE)] for _ in range(MAP_SIZE)]
     players = 0
     def __init__(self) -> None:
         pass
@@ -20,8 +57,9 @@ class game:
     def online():
         print(f"{game.players} is online")
         return game.players
-
-
+    
+    def baduk_start(i, j):
+        game.pans[i][j].start(game.mat[i][j][0], game.mat[i][j][1])
 
 class player(game):
     def __init__(self, name) -> None:
@@ -38,6 +76,11 @@ class player(game):
         self.x = info[0]
         self.y = info[1]
         game.mat[self.x][self.y].append(self.name)
+        if len(game.mat[self.x][self.y]) == 2:
+            game.baduk_start()
+            print("Game in {}, {} starts".format(self.x, self.y))
+            return True
+        return False
     
 
     def move(self, i, j):
@@ -48,8 +91,11 @@ class player(game):
         print(f"Player \"{self.name}\" has quit")
         if self.x != -1:
             game.mat[self.x][self.y].remove(self.name)
+            game.pans[self.x][self.y].out(self.name)
         game.players -= 1
 
+    def getPan(self):
+        return game.pans[self.x][self.y]
 
 def handle_client(client_socket, client_address):
     client_socket.send(struct.pack('!i', MAP_SIZE))
@@ -68,12 +114,15 @@ def handle_client(client_socket, client_address):
         P.dest()
         return
     info = struct.unpack(f'{5}i', info_data)
-    P.setLoc(info)
+    st = P.setLoc(info)
     P.setStat(info)
     game.now()
     msg = f"Your state is) \nlocation : {P.x}, {P.y}\nstat : {P.atk}, {P.df}\npose : {P.pos}\n"
     client_socket.send(msg.encode())
+
     # print(msg)
+    panmsg = P.getPan().showPan()
+    client_socket.send(panmsg.encode())
 
     while True:
         # Receive data from the client
@@ -89,9 +138,11 @@ def handle_client(client_socket, client_address):
             break
 
         print(f"Received from client: {message}")
-
+        i = int(message[0])
+        j = int(message[3])
+        P.getPan().putDol(i, j)
         # Send a response back to the client
-        response = "Hello from the server!"
+        response = P.getPan().showPan()
         client_socket.send(response.encode())
 
 
@@ -119,8 +170,9 @@ def main():
             start = time.time()
             while True:
                 # Accept a connection
-                client_socket, client_address = server_socket.accept()
+                client_socket, client_address = server_socket.accept()       
                 print(f"Connection from {client_address}")
+                client_socket.send(struct.pack('!i', 1))             
                 executor.submit(handle_client, client_socket, client_address)
 
         # Close the server socket

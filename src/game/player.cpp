@@ -52,7 +52,7 @@ void enter(int sock, Map& curr_map){
 
 void send_MSG(int sock){
     std::string msg;
-    std::cout << "Write your MSG"<<std::endl;
+    std::cout << "Where to put (i, j): ";
     gettingline(msg);
     if(msg == "_quit") {
         quit(sock);
@@ -64,7 +64,6 @@ void send_MSG(int sock){
         std::cerr<<"Failed to send data." << std::endl;
         return;
     }
-    std::cout<<"Your message \""<<msg<<"\" has sent"<<std::endl;
     char buffer[1024] = {0};
     recv(sock, buffer, 1024, 0);
     std::cout << "Server: " << buffer << std::endl;

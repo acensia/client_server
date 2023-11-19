@@ -25,6 +25,7 @@ int main () {
         std::cerr << "Can't connect to the server" << std::endl;
         return 1;
     }
+
     int MS;
     recv(sock, &MS, 8, 0);
     std::cout<<ntohl(MS)<<std::endl;
@@ -42,6 +43,12 @@ int main () {
 
     enter(sock, curr_map);
     std::cout<<"Communication starts!\n";
+    char buffer[81];
+    recv(sock, buffer, 81, 0);
+    for(int i=0; i<9; ++i){
+        for(int j=0; j<9; ++j) std::cout<<buffer[i*9 + j]<<" ";
+        std::cout<<'\n';
+    }
     in = true;
     do{
         send_MSG(sock);
