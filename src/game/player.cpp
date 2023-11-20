@@ -17,7 +17,7 @@ bool checkLoc(int x, int y, int ms){
 
 
 
-void enter(int sock, Map& curr_map){
+void enter(int sock, Map& curr_map, int& color){
     int x, y, atk, df, pos;
     std::cout<<"Set your location! Map size is "<<curr_map.getMapSize()<<std::endl;
     do {
@@ -36,18 +36,30 @@ void enter(int sock, Map& curr_map){
     const int info[] = {x, y, atk, df, pos};
     send(sock, info, sizeof(info), 0); /// Send your state
 
-    char buffer[64];
+    char buffer[81];
     std::string receivedMessage;
     int bytesReceived = 0;
 
-    bytesReceived = recv(sock, buffer, 64, 0);
+    //
+    // bytesReceived = recv(sock, buffer, 64, 0);
+
+    // if (bytesReceived == -1) {
+    //     // Handle errors
+    // }
+    // receivedMessage.append(buffer, bytesReceived);
+    // std::cout<<receivedMessage<<std::endl;
+    bytesReceived = recv(sock, buffer, 81, 0);
 
     if (bytesReceived == -1) {
         // Handle errors
     }
-    receivedMessage.append(buffer, bytesReceived);
-    std::cout<<receivedMessage<<std::endl;
-    return;
+    for(int i=0; i<9; ++i){
+        for(int j=0; j<9; ++j) std::cout<<buffer[i*9 + j]<<" ";
+        std::cout<<'\n';
+    }
+    int Sig;
+    recv(sock, &Sig, 4, 0);
+    color = Sig;
 }
 
 void send_MSG(int sock){
@@ -64,7 +76,19 @@ void send_MSG(int sock){
         std::cerr<<"Failed to send data." << std::endl;
         return;
     }
-    char buffer[1024] = {0};
-    recv(sock, buffer, 1024, 0);
-    std::cout << "Server: " << buffer << std::endl;
+    char buffer[81] = {0};
+    recv(sock, buffer, 81, 0);
+    std::cout << "Server: \n";
+    for(int i=0; i<9; ++i){
+        for(int j=0; j<9; ++j){
+            std::cout<<buffer[i*9 + j]<<" ";
+        }std::cout<<std::endl;
+    }
+}
+
+bool wait_turn(int sock){
+    std::cout<<"Waiting for turn \n";
+    int go;
+    recv(sock, &go, 4, 0);
+    return true;
 }

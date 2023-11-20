@@ -40,17 +40,18 @@ int main () {
         std::cerr<<"Failed to send name." << std::endl;
         return 1;
     }
-
-    enter(sock, curr_map);
+    int color; 
+    enter(sock, curr_map, color);
     std::cout<<"Communication starts!\n";
-    char buffer[81];
-    recv(sock, buffer, 81, 0);
-    for(int i=0; i<9; ++i){
-        for(int j=0; j<9; ++j) std::cout<<buffer[i*9 + j]<<" ";
-        std::cout<<'\n';
-    }
+    // char buffer[81];
+    // recv(sock, buffer, 81, 0);
+    // for(int i=0; i<9; ++i){
+    //     for(int j=0; j<9; ++j) std::cout<<buffer[i*9 + j]<<" ";
+    //     std::cout<<'\n';
+    // }
     in = true;
     do{
+        wait_turn(sock);
         send_MSG(sock);
     }while(in);
 
