@@ -35,7 +35,7 @@ bool Pan::PutDol(int code, bool c){
     }
     if(c) PAN[code] = self;
     else PAN[code] = opp;
-    showPan();
+    this->showPan();
     return true;
 }
 
