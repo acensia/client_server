@@ -40,8 +40,9 @@ int main () {
         std::cerr<<"Failed to send name." << std::endl;
         return 1;
     }
-    int color; 
-    enter(sock, curr_map, color);
+    int color;
+    Pan gamePan; 
+    enter(sock, curr_map, color, gamePan);
     std::cout<<"Communication starts!\n";
     // char buffer[81];
     // recv(sock, buffer, 81, 0);
@@ -51,8 +52,8 @@ int main () {
     // }
     in = true;
     do{
-        wait_turn(sock);
-        send_MSG(sock);
+        wait_turn(sock, gamePan);
+        send_MSG(sock, gamePan);
     }while(in);
 
     close(sock); // For Unix/Linux

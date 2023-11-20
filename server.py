@@ -22,20 +22,24 @@ class badukpan :
         return res
     
     def putDol(self, p, i, j):
+        print(i, j)
+        print(i*9 + j)
         if not self.ing:
+            print("Wrong signal?")
             return
         if p.name == self.p1.name:
             self.pan[i][j] = '*'
-            self.p2.sock(struct.pack('!i', 1))
+            self.p2.sock.send(struct.pack('!i', i*9 + j))
         else :
             self.pan[i][j] = 'o'
-            self.p1.sock(struct.pack('!i', 0))
+            self.p1.sock.send(struct.pack('!i', i*9 + j))
         self.showPan()
 
     def start(self, p1, p2):
         self.ing = True
         self.p1 = p1
         self.p2 = p2
+        p1.sock.send(struct.pack('!i', -1))
 
     def out(self, p):
         if self.p1 == p:
@@ -85,11 +89,11 @@ class player:
         self.sendStr(msg)
         print(len(game.mat[self.x][self.y]))
         if len(game.mat[self.x][self.y]) == 2:
-            game.baduk_start(self.x, self.y)
             print("Game in {}, {} starts".format(self.x, self.y))
             for i, p in enumerate(game.mat[self.x][self.y]):
                 p.sendInt(i)
                 print(i)
+            game.baduk_start(self.x, self.y)
             return True
         return False
     
@@ -143,9 +147,9 @@ def handle_client(client_socket, client_address):
     game.now()
     # msg = f"Your state is) \nlocation : {P.x}, {P.y}\nstat : {P.atk}, {P.df}\npose : {P.pos}\n"
     # client_socket.send(msg.encode())
-    startSig = client_socket.recv(6).decode()
-    if not startSig:
-        print("Sig error")
+    # startSig = client_socket.recv(6).decode()
+    # if not startSig:
+    #     print("Sig error")
     
 
     while True:
@@ -164,9 +168,8 @@ def handle_client(client_socket, client_address):
         print(f"Received from client: {message}")
         i = int(message[0])
         j = int(message[3])
-        P.getPan().putDol(i, j)
+        P.getPan().putDol(P, i, j)
         # Send a response back to the client
-        response = P.getPan().showPan()
         # client_socket.send(response.encode())
 
 

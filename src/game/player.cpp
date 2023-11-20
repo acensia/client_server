@@ -1,6 +1,8 @@
 #include <iostream>
 #include "game/player.h"
 
+bool check_format(std::string);
+
 bool check3000(int a, int b){
     if(a+b != 3000 || a<0 || b<0){
         std::cout<<"Enter the correct value!\n";
@@ -17,7 +19,7 @@ bool checkLoc(int x, int y, int ms){
 
 
 
-void enter(int sock, Map& curr_map, int& color){
+void enter(int sock, Map& curr_map, int& color, Pan& gamePan){
     int x, y, atk, df, pos;
     std::cout<<"Set your location! Map size is "<<curr_map.getMapSize()<<std::endl;
     do {
@@ -57,38 +59,65 @@ void enter(int sock, Map& curr_map, int& color){
         for(int j=0; j<9; ++j) std::cout<<buffer[i*9 + j]<<" ";
         std::cout<<'\n';
     }
+    receivedMessage.append(buffer, bytesReceived);
+    
+    gamePan.setPan(receivedMessage);
     int Sig;
     recv(sock, &Sig, 4, 0);
-    color = Sig;
+    color = ntohl(Sig);
+    gamePan.setColor(color);
 }
 
-void send_MSG(int sock){
+void send_MSG(int sock, Pan& gamePan){
     std::string msg;
     std::cout << "Where to put (i, j): ";
-    gettingline(msg);
-    if(msg == "_quit") {
+    do {
+        gettingline(msg);
+    } while(!check_format(msg));
+    if(msg == "quit") {
         quit(sock);
         return;
     }
-    
+    int i = msg[0] - '0';
+    int j = msg[3] - '0';
+    if(!gamePan.PutDol(i*9 + j, true)){
+        std::cout<<"Already existed\n";
+        send_MSG(sock, gamePan);
+        return;
+    }
     ssize_t bytes = send(sock, msg.c_str(), msg.length(), 0);
     if(bytes == -1){
         std::cerr<<"Failed to send data." << std::endl;
         return;
     }
     char buffer[81] = {0};
-    recv(sock, buffer, 81, 0);
-    std::cout << "Server: \n";
-    for(int i=0; i<9; ++i){
-        for(int j=0; j<9; ++j){
-            std::cout<<buffer[i*9 + j]<<" ";
-        }std::cout<<std::endl;
-    }
+    // recv(sock, buffer, 81, 0);
+    // std::cout << "Server: \n";
+    // for(int i=0; i<9; ++i){
+    //     for(int j=0; j<9; ++j){
+    //         std::cout<<buffer[i*9 + j]<<" ";
+    //     }std::cout<<std::endl;
+    // }
 }
 
-bool wait_turn(int sock){
+bool wait_turn(int sock, Pan& gamePan){
     std::cout<<"Waiting for turn \n";
     int go;
     recv(sock, &go, 4, 0);
+    go = ntohl(go);
+    if(go != -1) {
+        int i = go / 9;
+        int j = go % 9;
+        std::cout<<"Opposite put on "<<i<<", "<<j<<std::endl;
+        gamePan.PutDol(go, false);
+        go = 0;
+    }
     return true;
+}
+
+bool check_format(std::string msg){
+    if(msg == "quit") return true;
+    if(std::isdigit(msg[0]) && std::isdigit(msg[3])) return true;
+    std::cout<<"Check your msg\n";
+    return false;
 }

@@ -5,10 +5,10 @@
 #include "connection/connection.h"
 
 
-void enter(int, Map&, int&);
+void enter(int, Map&, int&, Pan&);
 
-void send_MSG(int sock);
+void send_MSG(int sock, Pan&);
 
-bool wait_turn(int);
+bool wait_turn(int, Pan&);
 
 #endif
